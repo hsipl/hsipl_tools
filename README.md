@@ -14,7 +14,7 @@ BS_STD, BS_Corrcoef, BS_Entropy
 BS_minV_BP, BS_maxV_BP, BS_SF_CTBS, BS_SB_CTBS  
 minV_BP, maxV_BP, SF_CTBS, SB_CTBS, uniform_BS  
 
-## Package Request:  
+## Package Request
 numpy  
 matplotlib  
 scipy  
