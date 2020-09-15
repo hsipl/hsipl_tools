@@ -6,6 +6,7 @@ ace, mf
 kmd_img, kmd_point, rmd_img, rmd_point
 kmfd, rmfd, K_rxd, R_rxd  
 lptd, utd, rxd_utd  
+tcimf, cbd_img, cbd_point, td_img, td_point  
 calc_R, calc_K_u  
 
 ## band_selection
