@@ -575,8 +575,7 @@ def lptd(HIM, R = None):
         Rinv = np.linalg.pinv(R)
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in lptd(), please check the input data')
     
-    result = np.dot(np.dot(oneL, Rinv), r)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.dot(np.dot(oneL, Rinv), r).reshape(HIM.shape[0], HIM.shape[1])
     return result
 
 def utd(HIM, K = None, u = None):
@@ -621,9 +620,78 @@ def rxd_utd(HIM, K = None, u = None):
         Kinv = np.linalg.pinv(K)
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in rxd_utd(), please check the input data')
 
-    result = np.sum((np.transpose(r-1)@Kinv)*np.transpose(ru), 1)
-    result = result.reshape([HIM.shape[0], HIM.shape[1]])
-    return result   
+    result = np.sum((np.transpose(r-1)@Kinv)*np.transpose(ru), 1).reshape([HIM.shape[0], HIM.shape[1]])
+    return result
+
+def tcimf(HIM, d, non_d):
+    '''
+    Target-Constrained Interference-Minimized Filter 
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, number], for example: [224, 3]
+    param non_d: undesired target non_d, type is 2d-array, size is [band num, number], for example: [224, 3] 
+    '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [-1, HIM.shape[2]]).T
+    non_d = np.reshape(non_d, [-1, HIM.shape[2]]).T
+    DU = np.hstack(([d, non_d]))
+    d_count = d.shape[1]
+    no_d_count = non_d.shape[1]
+    DUtw = np.zeros([d_count + no_d_count, 1])
+    DUtw[0: d_count] = 1
+    R = (1/HIM.shape[0]*HIM.shape[1])*np.dot(r, np.transpose(r))
+    try:
+        Rinv = np.linalg.inv(R)
+    except:
+        Rinv = np.linalg.pinv(R)
+    x = np.dot(np.dot(np.transpose(r), Rinv), DU)
+    y = np.dot(np.dot(np.transpose(DU), Rinv), DU)
+    y = np.linalg.inv(y)
+    result = np.dot(np.dot(x, y), DUtw).reshape(HIM.shape[0], HIM.shape[1])
+    return result
+
+def cbd_img(HIM, d):
+    '''
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])   
+    result = np.sum(np.abs(r-d), 0).reshape(HIM.shape[0], HIM.shape[1])
+    return result
+
+def cbd_point(p1, p2):
+    '''
+    
+    
+    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    '''
+    result = np.sum(np.abs(p1-p2), 0)
+    return result
+
+def td_img(HIM, d):
+    '''
+    
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])  
+    result = np.max(np.abs(r-d)).reshape(HIM.shape[0], HIM.shape[1])
+    return result
+    
+def td_point(p1, p2):
+    '''
+    
+    
+    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    '''
+    result = np.max(np.abs(p1-p2))
+    return result
 
 def calc_R(HIM):
     '''
