@@ -396,3 +396,125 @@ def uniform_BS(band_num, num):
     runtime = end - start
     
     return band_select, runtime
+
+def FminV_BP(imagecube, d, no_d, num):
+    xx,yy,band_num=imagecube.shape
+    test_image = imagecube.reshape((xx*yy, band_num), order='F')
+    
+    DU = np.hstack([d, no_d])
+    c = np.vstack(([np.ones([d.shape[1], 1]), np.zeros([no_d.shape[1], 1])]))
+    
+    score=np.zeros((band_num, 1))
+    for i in range(0,band_num):
+        T = DU[i, :].reshape(1, DU.shape[1])
+        r = test_image[:, i].reshape((test_image.shape[0], 1), order='F')
+        R = np.dot(np.transpose(r), r)/(xx*yy*1.0)
+        tt = np.linalg.inv(R)
+        W =  np.dot(np.dot(c.transpose(), 1 / (np.dot(np.dot(T.transpose(), tt), T))), c)
+        score[i] = W
+    
+    weight = np.abs(score)
+    coefficient_integer = weight * 1
+    
+    sorted_y2 = np.argsort(coefficient_integer, axis=0)
+    band_select = sorted_y2[:num]
+    
+    return band_select
+
+def BmaxV_BP(imagecube, d, no_d, num):
+    xx,yy,band_num=imagecube.shape
+    test_image = imagecube.reshape((xx*yy, band_num), order='F')
+    
+    DU = np.hstack([d, no_d])
+    c = np.vstack(([np.ones([d.shape[1], 1]), np.zeros([no_d.shape[1], 1])]))
+    
+    score=np.zeros((band_num,1))
+    for i in range(0,band_num):
+        T = np.delete(DU, i, 0)
+        r = np.delete(test_image, i, 1)
+        R = np.dot(np.transpose(r), r)/(xx*yy*1.0)
+        tt = np.linalg.inv(R)
+        W =  np.dot(np.dot(c.transpose(), 1 / (np.dot(np.dot(np.transpose(T), tt), T))), c)
+        score[i] = W
+        
+    weight = np.abs(score)
+    coefficient_integer = weight * -1
+    
+    sorted_y2 = np.argsort(coefficient_integer, axis=0)
+    band_select = sorted_y2[:num]
+    
+    return band_select
+
+def SF_TCIMBS(imagecube, d, no_d, num):
+    xx,yy,band_num=imagecube.shape
+    test_image = imagecube.reshape((xx*yy, band_num), order='F')
+    
+    DU = np.hstack([d, no_d])
+    c = np.vstack(([np.ones([d.shape[1], 1]), np.zeros([no_d.shape[1], 1])]))
+    
+    Fmin_band_select = FminV_BP(imagecube, d, no_d, num)
+    
+    omega = []
+    omega.append(np.int(Fmin_band_select[0]))
+    
+    for i in range(0, num-1):
+        score = np.zeros((band_num,1))
+        for j in range(0, band_num):
+            bl = []
+            bl.append(j)
+            omega_bl = np.array(list(set(omega) | set(bl)))
+            
+            new_r = test_image[:, omega_bl].transpose()
+            T = DU[omega_bl, :]
+            
+            new_R = np.dot(new_r, np.transpose(new_r))/(xx*yy*1.0)
+            new_tt = np.linalg.inv(new_R)
+            new_W = np.dot(np.dot(c.transpose(), 1 / (np.dot(np.dot(T.transpose(), new_tt), T))), c)
+            score[j] = new_W
+        
+        weight = np.abs(score)
+        coefficient_integer = weight * 1
+        sorted_indices = np.argsort(coefficient_integer, axis=0)
+        
+        omega.append(np.int(sorted_indices[0]))
+        
+    band_select = np.array(omega)
+    
+    return band_select
+
+def SB_TCIMBS(imagecube, d, no_d, num):
+    xx,yy,band_num=imagecube.shape
+    test_image = imagecube.reshape((xx*yy, band_num), order='F')
+    
+    DU = np.hstack([d, no_d])
+    c = np.vstack(([np.ones([d.shape[1], 1]), np.zeros([no_d.shape[1], 1])]))
+    
+    Bmax_band_select = BmaxV_BP(imagecube, d, no_d, num)
+    
+    omega = []
+    omega.append(np.int(Bmax_band_select[0]))
+    
+    for i in range(0, num-1):
+        score = np.zeros((band_num,1))
+        for j in range(0, band_num):
+            bl = []
+            bl.append(j)
+            omega_bl = list(set(omega) | set(bl))
+            
+            T = np.delete(DU, omega_bl, 0)
+            new_r = np.delete(test_image, omega_bl, 1)
+            
+            new_R = np.dot(np.transpose(new_r), new_r)/(xx*yy*1.0)
+            new_tt = np.linalg.inv(new_R)
+            new_W = np.dot(np.dot(c.transpose(), 1 / (np.dot(np.dot(T.transpose(), new_tt), T))), c)
+            score[j] = new_W
+        
+        weight = np.abs(score)
+        coefficient_integer = weight * -1
+        sorted_indices = np.argsort(coefficient_integer, axis=0)
+        
+        omega.append(np.int(sorted_indices[0]))
+        
+    band_select = np.array(omega)
+    
+    return band_select
