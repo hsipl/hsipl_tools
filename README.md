@@ -14,6 +14,14 @@ CEM_BCC, CEM_BCM, CEM_BDM
 BS_STD, BS_Corrcoef, BS_Entropy  
 BS_minV_BP, BS_maxV_BP, BS_SF_CTBS, BS_SB_CTBS  
 minV_BP, maxV_BP, SF_CTBS, SB_CTBS, uniform_BS  
+FminV_BP, BmaxV_BP, SF_TCIMBS, SB_TCIMBS  
+
+## preprocessing  
+data_normalize, msc, snv  
+awgn  
+
+## endmember_extraction  
+ATGP, PPI, SGA  
 
 ## Package Request
 numpy  
@@ -21,7 +29,7 @@ matplotlib
 scipy  
 pandas  
 
-## 懶得包起來了，git clone到site-packages就可以直接import了
+## 懶得包起來了，git clone到site-packages就可以直接import
 ![image](https://github.com/ek2061/hsipl_tools/blob/master/cmd.png)
 
 ## 範例程式
