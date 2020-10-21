@@ -7,6 +7,7 @@ Created on Sat Sep  5 19:59:38 2020
 
 import numpy as np
 import warnings
+import scipy
 
 def cem(HIM, d, R = None):
     '''
@@ -609,7 +610,7 @@ def sw_R_rxd(HIM, win):
 
 def lptd(HIM, R = None):
     '''
-    
+    Low Probability Target Detector
     
     param HIM: hyperspectral imaging, type is 3d-array
     param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
@@ -703,3 +704,171 @@ def calc_K_u(HIM):
         return K, u
     except:
         print('An error occurred in calc_K_u()')
+        
+def LSOSP(HIM, d, no_d):
+    '''
+    Least Squares Orthogonal Subspace Projection
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1]
+    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1]
+    '''
+    x, y, z = HIM.shape
+    
+    B = np.reshape(np.transpose(HIM), (z, x*y))
+    I = np.eye(z)
+    
+    P = I - np.dot(np.dot(no_d, (np.linalg.inv(np.dot(np.transpose(no_d), no_d)))), np.transpose(no_d))
+    
+    lsosp = (np.dot(d.transpose(), P)) / (np.dot(np.dot(d.transpose(), P), d))
+    
+    dr = np.dot(lsosp, B)
+    
+    result = np.transpose(np.reshape(dr, [y, x]))
+    
+    return result
+
+def KLSOSP(HIM, d, no_d, sig):
+    '''
+    Kernel-based Least Squares Orthogonal Subspace Projection
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1]
+    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1]
+    param sig: int, you can try 1, 10, 100, the results may all be different.
+    
+    KLSOSP是屬於kernael型的OSP 採用的kernael是RBF
+    '''
+    x, y, z = HIM.shape
+    
+    result = np.zeros([x, y])
+
+    KdU = kernelized(d, no_d, sig)
+    KUU = kernelized(no_d, no_d, sig)
+    IKUU = np.linalg.inv(KUU)
+    
+    for i in range(x):
+        for j in range(y):
+            r = HIM[i, j, :].reshape(z, 1)
+            
+            Kdr = kernelized(d, r, sig)
+            KUr = kernelized(no_d, r, sig)
+            
+            result[i, j] = Kdr - np.dot(np.dot(KdU, IKUU), KUr)          
+    return result
+
+def kernelized(x, y, sig):
+    x_1, y_1 = x.shape
+    x_2, y_2 = y.shape
+    
+    result = np.zeros([y_1, y_2])
+    
+    for i in range(y_1):
+        for j in range(y_2):
+            result[i, j] = np.exp((-1/2) * np.power(np.linalg.norm(x[:, i] - y[:, j]), 2) / (np.power(sig, 2)))
+    
+    return result
+
+def NWHFC(HIM, t):
+    '''
+    Harsanyi, Farrand, and Chang developed a NeymanPearson detection theory-based thresholding method (HFC)
+    Noise-Whitened HFC
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param t: a small number, you can try 1e-4, 1e-6 
+    
+    VD: Virtual Dimensionality
+    '''
+    x, y, z = HIM.shape
+    
+    pxl_no = x*y
+    r = np.reshape(np.transpose(HIM), (z, x*y))
+    
+    R = np.dot(r, np.transpose(r)) / pxl_no
+    u = (np.mean(r, 1)).reshape(z, 1)
+    K = R - np.dot(u, np.transpose(u))
+    
+    K_Inverse = np.linalg.inv(K)
+    
+    tuta = np.diag(K_Inverse)
+    
+    K_noise = 1 / tuta
+    
+    K_noise = np.diag(K_noise)
+    
+    image = np.dot(np.linalg.inv(scipy.linalg.sqrtm(K_noise)), r)
+    
+    image = np.transpose(np.reshape(image, (z, y, x)))
+    
+    number = HFC(image, t)
+    
+    print('The VD number estimated is ' + str(number))
+    
+    return number
+
+def HFC(HIM, t):
+    '''
+    Harsanyi, Farrand, and Chang developed a NeymanPearson detection theory-based thresholding method (HFC)
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param t: a small number, you can try 1e-4, 1e-6 
+    '''
+    x, y, z = HIM.shape
+    pxl_no = x*y
+    r = np.reshape(np.transpose(HIM), (z, x*y))
+    
+    R = np.dot(r, np.transpose(r)) / pxl_no
+    u = (np.mean(r, 1)).reshape(z, 1)
+    K = R - np.dot(u, np.transpose(u))
+    
+    D1 = np.linalg.eig(R)
+    D1 = np.sort(D1[0], 0)
+    
+    D2 = np.linalg.eig(K)
+    D2 = np.sort(D2[0], 0)
+    
+    sita = np.sqrt(((D1 ** 2 + D2 ** 2) * 2) / pxl_no)
+    
+    P_fa = t
+    
+    Threshold = (np.sqrt(2)) * sita * scipy.special.erfinv(1 - 2 * P_fa)
+    
+    Result = np.zeros([z, 1])
+    
+    for i in range(z):
+        if (D1[i] - D2[i]) > Threshold[i]:
+            Result[i] = 1
+            
+    number = int(np.sum(Result, 0))
+    
+    print('The VD number estimated is ' + str(number))
+    
+    return number
+
+def AMSD(HIM, d, no_d):
+    '''
+    Adaptive Matched Subspace Detector
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1]
+    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1]
+    '''
+    x, y, z = HIM.shape
+    
+    B = np.reshape(np.transpose(HIM), (z, x*y))
+
+    I = np.eye(z)
+    
+    E = np.hstack([d, no_d])
+    
+    P_B = I - (np.dot(no_d, np.linalg.pinv(no_d)))
+    
+    P_Z = I - (np.dot(E, np.linalg.pinv(E)))
+    
+    tmp = P_B - P_Z
+    
+    dr = (np.sum(np.dot(B.transpose(), tmp) * B.transpose(), 1)) / (np.sum(np.dot(B.transpose(), P_Z) * B.transpose(), 1))
+    
+    result = np.transpose(np.reshape(dr, [y, x]))
+    
+    return result

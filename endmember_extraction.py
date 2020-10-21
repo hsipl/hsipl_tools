@@ -178,3 +178,77 @@ def SGA(HIM, p):
     endmember_index = endmember_index.transpose()
     
     return endmember_index
+
+def NFINDR(HIM, p):
+    endmemberindex = []
+    
+    newvolume = 0
+    prevolume = -1
+    
+    row, column, band = HIM.shape
+    
+    switch_results = 1
+    
+    if band > p:
+        use_svd = 1
+    else:
+        use_svd = 0
+    
+    for i in range(p):
+        rand = np.random.rand()
+        while 1:
+            temp1 = np.round(row * rand)
+            temp2 = np.round(column * rand)
+            
+            if (temp1 > 0 and temp2 > 0):
+                break
+            
+        endmemberindex.append(np.hstack([temp1, temp2]))
+        
+    endmemberindex = (np.array(endmemberindex)).transpose().astype(np.int)
+    
+    print(endmemberindex)
+    
+    endmember = []
+    
+    for i in range(p):
+        if use_svd:
+            endmember.append(HIM[endmemberindex[0, i], endmemberindex[1, i], :].reshape(band))
+    
+    endmember = (np.array(endmember)).transpose()
+    
+    if use_svd:
+        s = np.linalg.svd(endmember)[1]
+        endmembervolume = 1
+        
+        for i in range(p):
+            endmembervolume = endmembervolume * s[i]
+            
+    while newvolume > prevolume:
+        for i in range(row):
+            for j in range(column):
+                for k in range(p):
+                    caculate = endmember.copy()
+                    
+                    if use_svd:
+                        caculate[:, k] = np.squeeze(HIM[i, j, :])
+                        s = np.linalg.svd(caculate)[1]
+                        volume = 1
+                        
+                        for z in range(p):
+                            volume = volume * s[z]
+                            
+                    if volume > endmembervolume:
+                        endmemberindex[:,k] = np.squeeze(np.vstack([i, j]))
+                        endmember = caculate.copy()
+                        endmembervolume = volume
+                        
+        prevolume = newvolume
+        newvolume = endmembervolume
+    
+    if switch_results:
+        endmemberindex = np.vstack([endmemberindex, endmemberindex[0, :].reshape(1, endmemberindex.shape[1])])
+        endmemberindex = np.delete(endmemberindex, 0, 0)
+        endmemberindex = endmemberindex.transpose()
+        
+    return endmemberindex
