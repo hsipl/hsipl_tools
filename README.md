@@ -8,6 +8,9 @@ kmfd, rmfd, K_rxd, R_rxd, sw_R_rxd
 lptd, utd, rxd_utd  
 tcimf, cbd_img, cbd_point, td_img, td_point  
 calc_R, calc_K_u  
+LSOSP, KLSOSP  
+NWHFC, HFC,  
+AMSD  
 
 ## band_selection 波段選擇演算法  
 CEM_BCC, CEM_BCM, CEM_BDM  
@@ -21,7 +24,7 @@ data_normalize, msc, snv
 awgn  
 
 ## endmember_extraction 端元選擇演算法  
-ATGP, PPI, SGA  
+ATGP, PPI, SGA, NFINDR  
 
 ## Package Request 套件要求  
 numpy  
