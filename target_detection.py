@@ -455,43 +455,45 @@ def rmd_point(p1, p2, R = None):
     result = np.dot(np.dot(np.transpose(x), Rinv), x)
     return result
 
-def kmfd(p1, p2, K = None, u = None):
+def kmfd(HIM, d, K = None, u = None):
     '''
-    Covariance Matched Filter based Distance for point to point
+    Covariance Matched Filter based Distance for image to point
     
-    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
-    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
     param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
     param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
     '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     if K is None or u is None:
-        K, u = calc_K_u(np.expand_dims(p1, 0))
+        K, u = calc_K_u(HIM)
     try:
         Kinv = np.linalg.inv(K)
     except:
         Kinv = np.linalg.pinv(K)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in kmfd(), please check the input data')
-    x = p1-u
-    y = p2-u
-    result = np.dot(np.dot(np.transpose(x), Kinv), np.transpose(y))
+        
+    result = (r-u).T@Kinv@(d-u)  
+    result = result.reshape(HIM.shape[0], HIM.shape[1])
     return result
 
-def rmfd(p1, p2, R = None):
+def rmfd(HIM, d, R = None):
     '''
-    Correlation Matched Filter based Distance for point to point
+    Correlation Matched Filter based Distance for image to point
     
-    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
-    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
     param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
     '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     if R is None:
-        R = calc_R(np.expand_dims(p1, 0))
+        R = calc_R(HIM)    
     try:
         Rinv = np.linalg.inv(R)
     except:
         Rinv = np.linalg.pinv(R)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in rmfd(), please check the input data')
-    result = np.dot(np.dot(np.transpose(p1), Rinv), p2)
+        
+    result = r.T@Rinv@d
+    result = result.reshape(HIM.shape[0], HIM.shape[1])
     return result
 
 def K_rxd(HIM, K = None, u = None, axis = ''):
