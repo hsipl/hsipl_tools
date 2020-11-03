@@ -1,0 +1,6 @@
+README.md
+setup.py
+hsipl_tools.egg-info/PKG-INFO
+hsipl_tools.egg-info/SOURCES.txt
+hsipl_tools.egg-info/dependency_links.txt
+hsipl_tools.egg-info/top_level.txt
