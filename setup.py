@@ -4,7 +4,7 @@ f = open("README.md","r", encoding = 'utf8')
 long_description = f.read()
 
 setuptools.setup(
-    name="hsipl_tools",
+    name="hsipl-tools",
     version="0.0.1",
     description="Tools for Hyperspectral Signal and Image Processing Laboratory of YunTech, Taiwan",
     license="MIT",
