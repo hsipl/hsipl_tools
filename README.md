@@ -32,18 +32,8 @@ matplotlib
 scipy  
 pandas  
 
-## How to use 使用方法  
-懶得包起來了，進到site-packages的位置下指令 git clone 就可以直接import  
-### Anaconda3
-C:\Users\user\Anaconda3\Lib\site-packages
-### 原生python
-C:\Users\user\AppData\Roaming\Python\Python38\site-packages
-
-git clone https://github.com/ek2061/hsipl_tools.git
-
-### 更新hsipl-tools的版本  
-進到hsipl-tools的資料夾然後指令下
-git pull
+## How to install 安裝方法  
+pip install git+https://github.com/ek2061/hsipl_tools  
 
 ## Sample 範例程式
 import scipy.io as sio  
