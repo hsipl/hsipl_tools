@@ -12,11 +12,13 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/ek2061/hsipl_tools",
-    packages=setuptools.find_packages(),
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+    packages=[''],
+    requires = [
+        "numpy",
+        "matplotlib",
+        "scipy",
+        "pandas"
     ],
+    license='MIT',
     python_requires='>=3.6',
 )
