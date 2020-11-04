@@ -1,43 +1,76 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Oct 25 20:15:04 2020
+
+@author: Yuchi
+"""
+
 import numpy as np
 from sklearn.decomposition import PCA
-
+from sklearn.cross_decomposition import PLSRegression
 
 class model:
-
     def PCA(self, data, n_components):
-
+        '''
+        Principal component analysis (PCA).
+        
+        param data: data, shape is [x, y, bands] or [x, bands].
+        param n_components: Number of components to keep.
+        '''
         if data.ndim > 2:
             data = data.reshape(-1, data.shape[2])
-        pca = PCA(n_components)
-        data = pca.fit_transform(data)
-        return data
-
-    def PLS_remove_background(self, hsi, n_components, points, show_hsi_band=10):
-        from sklearn.cross_decomposition import PLSRegression
+        pca_model = PCA(n_components)
+        pca_res = pca_model.fit_transform(data)
+        return pca_model, pca_res
+    
+    def PLS(self, data, ans, n_components):
+        '''
+        PLS regression
+        
+        param data: data, shape is [x, y, bands] or [x, bands].
+        param ans: one hot ans, shape is [data num, kinds num].
+        param n_components: Number of components to keep.
+        '''
+        if data.ndim > 2:
+            data = data.reshape(-1, data.shape[2])
+        pls = PLSRegression(n_components)  
+        pls_model = pls.fit(data, ans)
+        return pls_model
+    
+    def PCA_PLS(self, HIM, kinds, points, pca_components = 4, pls_components = 3, show_band = 150, isPaint = True):
         from matplotlib import pyplot as plt
-        pls = PLSRegression(n_components)
-        plt.figure(f"點選目標點共:{points}個點,分{n_components}類")
-        plt.imshow(hsi[:, :, show_hsi_band])
-        pos = np.array(plt.ginput(points), 'i')
-        d = [hsi[y, x] for x, y in pos]
+        
+        plt.figure()
+        plt.imshow(HIM[:, :, show_band])
+        
+        # 選點訓練
+        xy=np.array(plt.ginput(kinds*points), 'i')
+        d = []
+        for x, y in xy:
+            d.append(HIM[y, x])
         d = np.array(d)
+        
+        # 3類各三個點做 onehot encode        
+        y = np.array([[i]*points for i in range(kinds)]).reshape(-1)
+        n_values = np.max(y) + 1
+        y_onehot = np.eye(n_values)[y]
         plt.close()
-        y = []
-        classify = 0
-        for i in range(points):
-            check_value = n_components
-            if (i / n_components) == 0:
-                classify = classify + 1
-            y[i] = classify
-        y = np.array(y)
-        one_hot = np.eye(n_components + 1)[y]
-        d = this.PCA(d, n_components)
-        hsi = this.PCA(hsi, n_components)
-        pls_model = pls.fit(d, one_hot)
-        remove_background_res = pls_model.predict(
-            hsi.reshape(-1, n_components))
-        remove_background_res = np.argmax(
-            remove_background_res, -1).reshape(hsi.shape[0], hsi.shape[1])
-        plt.figure("background_remove_result")
-        plt.imshow(remove_background_res)
-        return remove_background_res
+        
+        # d做pca拿到模型與降維後的結果
+        pca_model, d_pca_res = self.PCA(d, pca_components)
+        
+        # img做pca拿到降維後的結果
+        img_pca = pca_model.transform(HIM.reshape(-1, HIM.shape[2]))
+    
+        # d做pls拿到model
+        pls_model = self.PLS(d_pca_res, y_onehot, pls_components)
+        
+        # 預測
+        img_predict = pls_model.predict(img_pca.reshape(-1, pca_components))
+        img_result = np.argmax(img_predict, -1).reshape(HIM.shape[0], HIM.shape[1])
+        
+        if isPaint:
+            plt.figure()
+            plt.imshow(img_result)
+        
+        return img_result
