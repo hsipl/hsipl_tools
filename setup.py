@@ -5,7 +5,7 @@ long_description = f.read()
 
 setuptools.setup(
     name="hsipl_tools",
-    version="0.0.2",
+    version="0.0.3",
     description="Tools for Hyperspectral Signal and Image Processing Laboratory of YunTech, Taiwan",
     license="MIT",
     long_description=long_description,
@@ -18,7 +18,8 @@ setuptools.setup(
         "numpy >= 1.14.5",
         "matplotlib",
         "scipy",
-        "pandas"
+        "pandas",
+        "scikit-learn"
     ],  
     python_requires='>=3.6',
 )

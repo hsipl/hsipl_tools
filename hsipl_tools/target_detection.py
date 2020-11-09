@@ -7,7 +7,7 @@ Created on Sat Sep  5 19:59:38 2020
 
 import numpy as np
 import warnings
-import scipy
+import calc_matrix as cm
 
 def cem(HIM, d, R = None):
     '''
@@ -20,7 +20,7 @@ def cem(HIM, d, R = None):
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])
     if R is None:
-        R = calc_R(HIM)
+        R = cm.calc_R(HIM)
     try:
         Rinv = np.linalg.inv(R)
     except:
@@ -325,7 +325,7 @@ def ace(HIM, d, K = None, u = None):
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])    
     if K is None or u is None:
-        K, u = calc_K_u(HIM)
+        K, u = cm.calc_K_u(HIM)
     rt = np.transpose(r)
     dt = np.transpose(d)
     try:
@@ -348,7 +348,7 @@ def mf(HIM, d, K = None, u = None):
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     if K is None or u is None:
-        K, u = calc_K_u(HIM)
+        K, u = cm.calc_K_u(HIM)
     du = d-u
     try:
         Kinv = np.linalg.inv(K)
@@ -383,7 +383,7 @@ def kmd_img(HIM, d, K = None, u = None):
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])
     if K is None or u is None:
-        K, u = calc_K_u(HIM)
+        K, u = cm.calc_K_u(HIM)
     try:
         Kinv = np.linalg.inv(K)
     except:
@@ -403,7 +403,7 @@ def kmd_point(p1, p2, K = None):
     param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
     '''
     if K is None:
-        K, _ = calc_K_u(np.expand_dims(p1, 0))
+        K, _ = cm.calc_K_u(np.expand_dims(p1, 0))
     try:
         Kinv = np.linalg.inv(K)
     except:
@@ -424,7 +424,7 @@ def rmd_img(HIM, d, R = None):
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])
     if R is None:
-        R = calc_R(HIM)    
+        R = cm.calc_R(HIM)    
     try:
         Rinv = np.linalg.inv(R)
     except:
@@ -445,7 +445,7 @@ def rmd_point(p1, p2, R = None):
     param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
     '''
     if R is None:
-        R = calc_R(np.expand_dims(p1, 0))
+        R = cm.calc_R(np.expand_dims(p1, 0))
     try:
         Rinv = np.linalg.inv(R)
     except:
@@ -465,8 +465,9 @@ def kmfd(HIM, d, K = None, u = None):
     param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])
     if K is None or u is None:
-        K, u = calc_K_u(HIM)
+        K, u = cm.calc_K_u(HIM)
     try:
         Kinv = np.linalg.inv(K)
     except:
@@ -485,8 +486,9 @@ def rmfd(HIM, d, R = None):
     param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])
     if R is None:
-        R = calc_R(HIM)    
+        R = cm.calc_R(HIM)    
     try:
         Rinv = np.linalg.inv(R)
     except:
@@ -496,224 +498,64 @@ def rmfd(HIM, d, R = None):
     result = result.reshape(HIM.shape[0], HIM.shape[1])
     return result
 
-def K_rxd(HIM, K = None, u = None, axis = ''):
+def tcimf(HIM, d, no_d):
     '''
-    Reed–Xiaoli Detector for image to point use Covariance Matrix and mean value µ
+    Target-Constrained Interference-Minimized Filter
     
     param HIM: hyperspectral imaging, type is 3d-array
-    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
-    param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
-    param axis: 'N' is normalized RXD, 'M' is modified RXD, other inputs represent the original RXD
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
+    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
-    if K is None or u is None:
-        K, u = calc_K_u(HIM) 
-    ru = r-u
-    rut = np.transpose(ru)
-    try:
-        Kinv = np.linalg.inv(K)
-    except:
-        Kinv = np.linalg.pinv(K)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in K_rxd(), please check the input data')
-    
-    if axis == 'N':
-        n = np.sum((rut*rut), 1)
-        result = np.sum(((np.dot(rut, Kinv))*rut), 1)
-        result = result/n
-    elif axis == 'M':
-        n = np.power(np.sum((rut*rut), 1), 0.5)
-        result = np.sum(((np.dot(rut, Kinv))*rut), 1)
-        result = result/n
-    else:
-        result = np.sum((np.dot(rut, Kinv))*rut, 1)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
-    return result
-
-def R_rxd(HIM, R = None, axis = ''):
-    '''
-    Reed–Xiaoli Detector for image to point use Correlation Matrix
-    
-    param HIM: hyperspectral imaging, type is 3d-array
-    param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
-    param axis: 'N' is normalized RXD, 'M' is modified RXD, other inputs represent the original RXD
-    '''
-    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
-    rt = np.transpose(r)
-    
-    if R is None:
-        R = calc_R(HIM)
+    result = np.zeros([HIM.shape[0]*HIM.shape[1], 1])
+    DU = np.hstack(([d, no_d]))
+    d_count = d.shape[1]
+    no_d_count = no_d.shape[1]
+    DUtw = np.zeros([d_count + no_d_count, 1])
+    DUtw[0: d_count] = 1
+    R = (1/HIM.shape[0]*HIM.shape[1])*np.dot(r, np.transpose(r))
     try:
         Rinv = np.linalg.inv(R)
     except:
         Rinv = np.linalg.pinv(R)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in R_rxd(), please check the input data')
-    
-    if axis == 'N':
-        n = np.sum((rt*rt), 1)
-        result = np.sum(((np.dot(rt, Rinv))*rt), 1)
-        result = result/n
-    elif axis == 'M':
-        n = np.power(np.sum((rt*rt), 1), 0.5)
-        result = np.sum(((np.dot(rt, Rinv))*rt), 1)
-        result = result/n
-    else:
-        result = np.sum(((np.dot(rt, Rinv))*rt), 1)
+    x = np.dot(np.dot(np.transpose(r), Rinv), DU)
+    y = np.dot(np.dot(np.transpose(DU), Rinv), DU)
+    y = np.linalg.inv(y)
+    result = np.dot(np.dot(x, y), DUtw)  
     result = result.reshape(HIM.shape[0], HIM.shape[1])
     return result
 
-def sw_R_rxd(HIM, win):
+def cbd_img(HIM, d):
     '''
-    Sliding Window based Reed–Xiaoli Detector use Correlation Matrix
-    Note: This function will cost a lot of CPU performance
+    
     
     param HIM: hyperspectral imaging, type is 3d-array
-    param win: window size used for sliding
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
     '''
-    x, y, z = HIM.shape
-    if win*2 > HIM.shape[0] or win*2 > HIM.shape[1]:
-        raise ValueError('Wrong window size for sw_R_rxd()')
-    half = np.fix(win / 2);
-    result = np.zeros([x, y])
+    r = np.transpose(np.reshape(HIM, [HIM.shape[0]*HIM.shape[1], HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])
     
-    for i in range(x):
-        for j in range(y):
-            x1 = i - half
-            x2 = i + half
-            y1 = j - half
-            y2 = j + half
-            
-            if x1 <= 0:
-                x1 = 0;
-            elif x2 >= x:
-                x2 = x
-                
-            if y1 <= 0:
-                y1 = 0;
-            elif y2 >= y:
-                y2 = y
-            
-            x1 = np.int(x1)
-            x2 = np.int(x2)
-            y1 = np.int(y1)
-            y2 = np.int(y2)
-            
-            Local_HIM = HIM[x1:x2, y1:y2, :]
-            
-            xx, yy, zz = Local_HIM.shape
-            X = np.reshape(np.transpose(Local_HIM), (zz, xx*yy))
-            S = np.dot(X, np.transpose(X))
-            r = np.reshape(HIM[i, j, :], [z,1])
-            
-            IS = np.linalg.inv(S)
-         
-            result[i,j] = np.dot(np.dot(np.transpose(r), IS), r)
-    
+    result = np.sum(abs(r-d))
+    result = result.reshape(HIM.shape[0], HIM.shape[1])   
     return result
 
-def lptd(HIM, R = None):
+def cbd_point(p1, p2):
     '''
-    Low Probability Target Detector
     
-    param HIM: hyperspectral imaging, type is 3d-array
-    param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
+    
+    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
     '''
-    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
-    oneL = np.ones([1, HIM.shape[2]])
-    if R is None:
-        R = calc_R(HIM) 
-    try:
-        Rinv = np.linalg.inv(R)
-    except:
-        Rinv = np.linalg.pinv(R)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in lptd(), please check the input data')
-    
-    result = np.dot(np.dot(oneL, Rinv), r)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.sum(abs(p1-p2), 0)
     return result
-
-def utd(HIM, K = None, u = None):
-    '''
-    Uniform Target Detector for image to point
-    
-    param HIM: hyperspectral imaging, type is 3d-array
-    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
-    param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
-    '''
-    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
-    oneL = np.ones([1, HIM.shape[2]])
-    if K is None or u is None:
-        K, u = calc_K_u(HIM)
-    ru = r-u
-    try:
-        Kinv = np.linalg.inv(K)
-    except:
-        Kinv = np.linalg.pinv(K)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in utd(), please check the input data')
-    
-    result = (oneL-np.transpose(u))@Kinv@ru
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
-    return result
-
-def rxd_utd(HIM, K = None, u = None):
-    '''
-    
-    
-    param HIM: hyperspectral imaging, type is 3d-array
-    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
-    param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
-    '''
-    N = HIM.shape[0]*HIM.shape[1]
-    r = np.transpose(HIM.reshape([N, HIM.shape[2]])) 
-    if K is None or u is None:
-        K, u = calc_K_u(HIM)
-    ru = r-u
-    try:
-        Kinv = np.linalg.inv(K)
-    except:
-        Kinv = np.linalg.pinv(K)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in rxd_utd(), please check the input data')
-
-    result = np.sum((np.transpose(r-1)@Kinv)*np.transpose(ru), 1)
-    result = result.reshape([HIM.shape[0], HIM.shape[1]])
-    return result   
-
-def calc_R(HIM):
-    '''
-    Calculate the Correlation Matrix R
-    
-    param HIM: hyperspectral imaging, type is 3d-array
-    '''
-    try:
-        N = HIM.shape[0]*HIM.shape[1]
-        r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
-        R = 1/N*(r@r.T)
-        return R
-    except:
-        print('An error occurred in calc_R()')
-
-def calc_K_u(HIM):
-    '''
-    Calculate the Covariance Matrix K and mean value µ
-    mean value µ was named u just because it looks like u :P
-    
-    param HIM: hyperspectral imaging, type is 3d-array
-    '''
-    try:
-        N = HIM.shape[0]*HIM.shape[1]
-        r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
-        u = (np.mean(r, 1)).reshape(HIM.shape[2], 1)        
-        K = 1/N*np.dot(r-u, np.transpose(r-u))
-        return K, u
-    except:
-        print('An error occurred in calc_K_u()')
         
 def LSOSP(HIM, d, no_d):
     '''
     Least Squares Orthogonal Subspace Projection
     
     param HIM: hyperspectral imaging, type is 3d-array
-    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1]
-    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1]
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
+    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
     '''
     x, y, z = HIM.shape
     
@@ -771,82 +613,6 @@ def kernelized(x, y, sig):
     
     return result
 
-def NWHFC(HIM, t):
-    '''
-    Harsanyi, Farrand, and Chang developed a NeymanPearson detection theory-based thresholding method (HFC)
-    Noise-Whitened HFC
-    
-    param HIM: hyperspectral imaging, type is 3d-array
-    param t: a small number, you can try 1e-4, 1e-6 
-    
-    VD: Virtual Dimensionality
-    '''
-    x, y, z = HIM.shape
-    
-    pxl_no = x*y
-    r = np.reshape(np.transpose(HIM), (z, x*y))
-    
-    R = np.dot(r, np.transpose(r)) / pxl_no
-    u = (np.mean(r, 1)).reshape(z, 1)
-    K = R - np.dot(u, np.transpose(u))
-    
-    K_Inverse = np.linalg.inv(K)
-    
-    tuta = np.diag(K_Inverse)
-    
-    K_noise = 1 / tuta
-    
-    K_noise = np.diag(K_noise)
-    
-    image = np.dot(np.linalg.inv(scipy.linalg.sqrtm(K_noise)), r)
-    
-    image = np.transpose(np.reshape(image, (z, y, x)))
-    
-    number = HFC(image, t)
-    
-    print('The VD number estimated is ' + str(number))
-    
-    return number
-
-def HFC(HIM, t):
-    '''
-    Harsanyi, Farrand, and Chang developed a NeymanPearson detection theory-based thresholding method (HFC)
-    
-    param HIM: hyperspectral imaging, type is 3d-array
-    param t: a small number, you can try 1e-4, 1e-6 
-    '''
-    x, y, z = HIM.shape
-    pxl_no = x*y
-    r = np.reshape(np.transpose(HIM), (z, x*y))
-    
-    R = np.dot(r, np.transpose(r)) / pxl_no
-    u = (np.mean(r, 1)).reshape(z, 1)
-    K = R - np.dot(u, np.transpose(u))
-    
-    D1 = np.linalg.eig(R)
-    D1 = np.sort(D1[0], 0)
-    
-    D2 = np.linalg.eig(K)
-    D2 = np.sort(D2[0], 0)
-    
-    sita = np.sqrt(((D1 ** 2 + D2 ** 2) * 2) / pxl_no)
-    
-    P_fa = t
-    
-    Threshold = (np.sqrt(2)) * sita * scipy.special.erfinv(1 - 2 * P_fa)
-    
-    Result = np.zeros([z, 1])
-    
-    for i in range(z):
-        if (D1[i] - D2[i]) > Threshold[i]:
-            Result[i] = 1
-            
-    number = int(np.sum(Result, 0))
-    
-    print('The VD number estimated is ' + str(number))
-    
-    return number
-
 def AMSD(HIM, d, no_d):
     '''
     Adaptive Matched Subspace Detector
@@ -874,3 +640,88 @@ def AMSD(HIM, d, no_d):
     result = np.transpose(np.reshape(dr, [y, x]))
     
     return result
+
+def AMF(original, target):
+    x, y, z = original.shape
+
+    B = original.reshape(x * y, z)
+    u = np.mean(B, 0)
+    rep_u = u.reshape(1, z)
+    
+    Bu = B - rep_u
+    
+    K = np.dot(np.transpose(Bu), Bu) / (x * y)
+    
+    iK = np.linalg.inv(K)
+    
+    dr = np.dot(np.dot(target.transpose(), iK), B.transpose()) / np.dot(np.dot(target.transpose(), iK), target)
+    
+    AMF_result = dr.reshape(x, y)
+    
+    return AMF_result
+
+def ASW_CEM(HIM, d, Sprout_HIM, minwd, midwd, maxwd, wd_range, sprout_rate):
+    x, y, z = HIM.shape
+    
+    wd_matrix = np.zeros([x, y])
+    mid_ASW_CEM_result = np.zeros([x, y])
+    K = midwd
+    
+    for i in range(x):
+        j = 0
+        countnum = 0
+        while j < y:
+            half = np.fix(K / 2)
+            
+            x1 = np.int(i - half)
+            x2 = np.int(i + half)
+            y1 = np.int(j - half)
+            y2 = np.int(j + half)
+            
+            if x1 <= 0:
+                x1 = 0
+            elif x2 >= x:
+                x2 = x
+                
+            if y1 <= 0:
+                y1 = 0
+            elif y2 >= y:
+                y2 = y
+            
+            xx, yy, zz = Sprout_HIM.shape
+            Sprout = Sprout_HIM.reshape(xx * yy, zz)
+            temp = np.sum(np.sum(Sprout[x1:x2, y1:y2], 0), 0)
+            sumsprout = temp
+            num = Sprout[x1:x2, y1:y2].shape[0] * Sprout[x1:x2, y1:y2].shape[1]
+            
+            if (sumsprout / num) < (sprout_rate - 0.001) and countnum == 0:
+                K = K - wd_range
+                j = j - 1
+                countnum = 1
+            elif (sumsprout / num) > (sprout_rate + 0.001) and countnum == 0:
+                K = K + wd_range
+                j = j - 1
+                countnum = 2;
+            elif (sumsprout / num) < (0.01) and countnum == 1 and K > minwd:
+                K = K - wd_range
+                j = j - 1
+            elif (sumsprout / num) > (0.01) and countnum == 2 and K < maxwd:
+                K = K + wd_range
+                j = j - 1
+            else:
+                Local_HIM = HIM[x1:x2, y1:y2,:]
+                
+                xxx, yyy, zzz = Local_HIM.shape
+                X = Local_HIM.reshape(xxx * yyy, zzz)
+                S = np.dot(np.transpose(X), X)
+                r = np.reshape(HIM[i, j, :], [z, 1])
+				
+                IS = np.linalg.inv(S)
+                
+                mid_ASW_CEM_result[i, j] = np.dot(np.dot(np.transpose(r), IS), d) / np.dot(np.dot(np.transpose(d), IS), d)
+                wd_matrix[i, j] = K
+                K = midwd
+                countnum = 0
+            j = j + 1
+    
+    return mid_ASW_CEM_result
