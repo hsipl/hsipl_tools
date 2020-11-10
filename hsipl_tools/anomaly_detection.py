@@ -7,7 +7,7 @@ Created on Mon Nov  9 13:44:42 2020
 
 import numpy as np
 import warnings
-import calc_matrix as cm
+from . import calc_matrix as cm
 
 def K_rxd(HIM, K = None, u = None, axis = ''):
     '''
@@ -74,6 +74,23 @@ def R_rxd(HIM, R = None, axis = ''):
     result = result.reshape(HIM.shape[0], HIM.shape[1])
     return result
 
+def CR_rxd(HIM, R = None):
+    '''
+    Reed–Xiaoli Detector for image to point use Causal Correlation Matrix
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
+    '''
+
+def CK_rxd(HIM, K = None, u = None):
+    '''
+    Reed–Xiaoli Detector for image to point use Causal Covariance Matrix and mean value µ
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
+    param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
+    '''
+    
 def utd(HIM, K = None, u = None):
     '''
     Uniform Target Detector for image to point

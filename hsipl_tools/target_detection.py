@@ -7,7 +7,7 @@ Created on Sat Sep  5 19:59:38 2020
 
 import numpy as np
 import warnings
-import calc_matrix as cm
+from . import calc_matrix as cm
 
 def cem(HIM, d, R = None):
     '''
