@@ -12,6 +12,7 @@ from . import calc_matrix as cm
 def R_rxd(HIM, R = None, axis = ''):
     '''
     Reed–Xiaoli Detector for image to point use Correlation Matrix
+    R是拿整張圖算，r是整張圖
     
     param HIM: hyperspectral imaging, type is 3d-array
     param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
@@ -44,6 +45,7 @@ def R_rxd(HIM, R = None, axis = ''):
 def K_rxd(HIM, K = None, u = None, axis = ''):
     '''
     Reed–Xiaoli Detector for image to point use Covariance Matrix and mean value µ
+    K, u是拿整張圖算，r是整張圖
     
     param HIM: hyperspectral imaging, type is 3d-array
     param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
@@ -77,7 +79,7 @@ def K_rxd(HIM, K = None, u = None, axis = ''):
 def CR_rxd(HIM, R = None):
     '''
     Reed–Xiaoli Detector for image to point use Causal Correlation Matrix
-    用HIM算R，r是用最後一個點，return最後一個點的結果
+    R是拿整張圖算，r是拿HIM的最後一個點，return最後一個點的結果
     
     param HIM: hyperspectral imaging, type is 3d-array
     param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
@@ -98,7 +100,7 @@ def CR_rxd(HIM, R = None):
 def CK_rxd(HIM, K = None, u = None):
     '''
     Reed–Xiaoli Detector for image to point use Causal Covariance Matrix and mean value µ
-    用HIM算K，r是用最後一個點，return最後一個點的結果
+    K, u是拿整張圖算，r是拿HIM的最後一個點，return最後一個點的結果
     
     param HIM: hyperspectral imaging, type is 3d-array
     param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
@@ -120,13 +122,13 @@ def CK_rxd(HIM, K = None, u = None):
     result = rut@Kinv@ru
     return result
 
-def RT_CT_rxd(r, last_R, n):
+def RT_CR_rxd(r, last_R, n):
     '''
     Reed–Xiaoli Detector for image to point use real-time Causal Correlation Matrix
-    用Woodbuty算Rinv，r用最後一個點，return最後一個點的結果和R
+    R是拿前一個R用Woodbury推算出來的，r是拿HIM的最後一個點，return最後一個點的結果
     
     param r: hyperspectral signal, type is  2d-array, shape is [band num, 1]
-    param last_R: last R, R(n-1), type is 2d-array, shape is [band num, band num]
+    param last_R: last Correlation Matrix, R(n-1), type is 2d-array, shape is [band num, band num]
     param n: n-th point (now), type is int
     '''
     r = np.reshape(r, [-1, 1])
@@ -134,8 +136,31 @@ def RT_CT_rxd(r, last_R, n):
     Rinv = cm.calc_Woodbury_R(r, last_R, n)
     
     result = rt@Rinv@r
-    R = np.linalg.inv(Rinv)
+    R = np.linalg.inv(Rinv)  # ( R^(-1) )^-1 = R 
     return result, R
+
+def RT_CK_rxd(r, last_K, last_u, n):
+    '''
+    Reed–Xiaoli Detector for image to point use real-time Causal Covariance Matrix and mean value µ
+    K是拿當前r和前一個u推算出來的，r是拿HIM的最後一個點，return最後一個點的結果
+    
+    param r: hyperspectral signal, type is  2d-array, shape is [band num, 1]
+    param last_K: last Covariance Matrix, K(n-1), type is 2d-array, shape is [band num, band num]
+    param last_u: last mean value µ, u(n-1), shape is [band num, 1]
+    param n: n-th point (now), type is int
+    '''
+    r = np.reshape(r, [-1, 1])
+    K, ru = cm.calc_Woodbury_K_ru(r, last_K, last_u, n)
+    rut = np.transpose(ru)
+    try:
+        Kinv = np.linalg.inv(K)
+    except:
+        Kinv = np.linalg.pinv(K)
+        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in RT_CK_rxd(), please check the input data')
+    
+    result = rut@Kinv@ru
+    u = -ru+r  # -(r-u) + r = u-r+r = u
+    return result, K, u
     
 def utd(HIM, K = None, u = None):
     '''
