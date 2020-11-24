@@ -19,7 +19,8 @@ setuptools.setup(
         "matplotlib",
         "scipy",
         "pandas",
-        "scikit-learn"
+        "scikit-learn",
+        "scikit-image"
     ],  
     python_requires='>=3.6',
 )

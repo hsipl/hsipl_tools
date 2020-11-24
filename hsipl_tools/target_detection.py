@@ -313,9 +313,9 @@ def rsdpw_sid_sin(p1, p2, d):
     result = max(sid_sin_p1d_res/sid_sin_p2d_res, sid_sin_p2d_res/sid_sin_p1d_res)
     return result
 
-def ace(HIM, d, K = None, u = None):
+def R_ace(HIM, d, R = None):
     '''
-    Adaptive Cosin/Coherent Estimator for image to point
+    Adaptive Cosin/Coherent Estimator for image to point use Correlation Matrix
     
     param HIM: hyperspectral imaging, type is 3d-array
     param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]    
@@ -324,8 +324,32 @@ def ace(HIM, d, K = None, u = None):
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])    
-    if K is None or u is None:
-        K, u = cm.calc_K_u(HIM)
+    if R is None:
+        R = cm.calc_R(HIM)
+    rt = np.transpose(r)
+    dt = np.transpose(d)
+    try:
+        Rinv = np.linalg.inv(R)
+    except:
+        Rinv = np.linalg.pinv(R)
+    
+    result = (dt@Rinv@r)**2 / ((dt@Rinv@d) * np.sum((rt@Rinv)*rt, 1)).reshape(1, HIM.shape[0]*HIM.shape[1])
+    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    return result
+
+def K_ace(HIM, d, K = None):
+    '''
+    Adaptive Cosin/Coherent Estimator for image to point use Covariance Matrix
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]    
+    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
+    param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
+    '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])    
+    if K is None:
+        K, _ = cm.calc_K_u(HIM)
     rt = np.transpose(r)
     dt = np.transpose(d)
     try:
@@ -527,21 +551,21 @@ def tcimf(HIM, d, no_d):
 
 def cbd_img(HIM, d):
     '''
-    
+    Canopy Bulk Density for image to point
     
     param HIM: hyperspectral imaging, type is 3d-array
     param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
     '''
-    r = np.transpose(np.reshape(HIM, [HIM.shape[0]*HIM.shape[1], HIM.shape[2]]))
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])
     
     result = np.sum(abs(r-d))
-    result = result.reshape(HIM.shape[0], HIM.shape[1])   
+    result = result.reshape(HIM.shape[0], HIM.shape[1])
     return result
 
 def cbd_point(p1, p2):
     '''
-    
+    Canopy Bulk Density for point to point
     
     param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
     param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
@@ -613,54 +637,57 @@ def kernelized(x, y, sig):
     
     return result
 
-def AMSD(HIM, d, no_d):
+def amsd(HIM, d, no_d):
     '''
     Adaptive Matched Subspace Detector
     
     param HIM: hyperspectral imaging, type is 3d-array
     param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1]
     param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1]
-    '''
-    x, y, z = HIM.shape
-    
-    B = np.reshape(np.transpose(HIM), (z, x*y))
-
-    I = np.eye(z)
-    
+    '''   
+    rt = np.reshape(HIM, [-1, HIM.shape[2]])
+    I = np.eye(HIM.shape[2])
     E = np.hstack([d, no_d])
     
-    P_B = I - (np.dot(no_d, np.linalg.pinv(no_d)))
+    a = I - (no_d@np.linalg.pinv(no_d))
+    b = I - (E@np.linalg.pinv(E))
+    c = a-b
     
-    P_Z = I - (np.dot(E, np.linalg.pinv(E)))
+    result = np.sum((rt@c)*rt, 1)/np.sum((rt@b)*rt, 1)
+    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    return result
+
+def amf(HIM, d, K = None, u = None):
+    '''
+    Adaptive Matched Filter
     
-    tmp = P_B - P_Z
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1] 
+    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
+    param u: mean value µ, type is 2d-array, size is same as param d, if u is None, it will be calculated in the function
+    '''
+    rt = np.reshape(HIM, [-1, HIM.shape[2]])
+    r = np.transpose(rt)
+    d = np.reshape(d, [HIM.shape[2], 1])
+    dt = np.transpose(d)
     
-    dr = (np.sum(np.dot(B.transpose(), tmp) * B.transpose(), 1)) / (np.sum(np.dot(B.transpose(), P_Z) * B.transpose(), 1))
+    if K is None or u is None:
+        K, u = cm.calc_K_u(HIM)  
+    try:
+        Kinv = np.linalg.inv(K)
+    except:
+        Kinv = np.linalg.pinv(K)
+        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in amf(), please check the input data')
     
-    result = np.transpose(np.reshape(dr, [y, x]))
+    result = (dt@Kinv@r)/(dt@Kinv@d)
+    result = result.reshape(HIM.shape[0], HIM.shape[1])
     
     return result
 
-def AMF(original, target):
-    x, y, z = original.shape
-
-    B = original.reshape(x * y, z)
-    u = np.mean(B, 0)
-    rep_u = u.reshape(1, z)
-    
-    Bu = B - rep_u
-    
-    K = np.dot(np.transpose(Bu), Bu) / (x * y)
-    
-    iK = np.linalg.inv(K)
-    
-    dr = np.dot(np.dot(target.transpose(), iK), B.transpose()) / np.dot(np.dot(target.transpose(), iK), target)
-    
-    AMF_result = dr.reshape(x, y)
-    
-    return AMF_result
-
 def ASW_CEM(HIM, d, Sprout_HIM, minwd, midwd, maxwd, wd_range, sprout_rate):
+    '''
+    Adaptive Sliding Window based Constrained Energy Minimization
+    '''
     x, y, z = HIM.shape
     
     wd_matrix = np.zeros([x, y])
