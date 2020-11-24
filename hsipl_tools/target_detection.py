@@ -27,7 +27,7 @@ def cem(HIM, d, R = None):
         Rinv = np.linalg.pinv(R)
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in cem_img(), please check the input data')
     result = np.dot(np.transpose(r), np.dot(Rinv, d))/np.dot(np.transpose(d), np.dot(Rinv, d))
-    result = np.reshape(result, [HIM.shape[0], HIM.shape[1]])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def subset_cem(HIM, d, win_height = None, win_width = None):
@@ -160,7 +160,7 @@ def sam_img(HIM, d):
     rd = np.sum(r*d, 0)
     result = np.arccos(rd/(rr*dd))
     
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
     
 def sam_point(p1, p2):
@@ -188,7 +188,7 @@ def ed_img(HIM, d):
     d = np.reshape(d, [HIM.shape[2], 1])      
     
     result = np.sum((r-d)**2, 0)**0.5
-    result = result.reshape(HIM.shape[0], HIM.shape[1])                    
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def ed_point(p1, p2):
@@ -218,7 +218,7 @@ def sid_img(HIM, d):
     ddr = np.sum(n*np.log(n/m), 0)
     result = drd+ddr
     
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def sid_point(p1, p2):
@@ -334,7 +334,7 @@ def R_ace(HIM, d, R = None):
         Rinv = np.linalg.pinv(R)
     
     result = (dt@Rinv@r)**2 / ((dt@Rinv@d) * np.sum((rt@Rinv)*rt, 1)).reshape(1, HIM.shape[0]*HIM.shape[1])
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def K_ace(HIM, d, K = None):
@@ -358,7 +358,7 @@ def K_ace(HIM, d, K = None):
         Kinv = np.linalg.pinv(K)
     
     result = (dt@Kinv@r)**2 / ((dt@Kinv@d) * np.sum((rt@Kinv)*rt, 1)).reshape(1, HIM.shape[0]*HIM.shape[1])
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = result.reshape(HIM.shape[:-1])
     return result
 
 def mf(HIM, d, K = None, u = None):
@@ -382,7 +382,7 @@ def mf(HIM, d, K = None, u = None):
     k = 1 / (du.T@Kinv@du)    
     w = k*(Kinv@du)
     result = w.T@r
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 #def glrt(HIM, d, non_d):
@@ -415,7 +415,7 @@ def kmd_img(HIM, d, K = None, u = None):
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in kmd_img(), please check the input data')
         
     result = np.sum(Kinv@(r-d)*(r-d), 0)**0.5
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def kmd_point(p1, p2, K = None):
@@ -457,7 +457,7 @@ def rmd_img(HIM, d, R = None):
         
     result = np.sum(Rinv@(r-d)*(r-d), 0)**0.5
     result = 1-(result/np.max(result))
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def rmd_point(p1, p2, R = None):
@@ -498,7 +498,7 @@ def kmfd(HIM, d, K = None, u = None):
         Kinv = np.linalg.pinv(K)
         
     result = (r-u).T@Kinv@(d-u)  
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def rmfd(HIM, d, R = None):
@@ -519,7 +519,7 @@ def rmfd(HIM, d, R = None):
         Rinv = np.linalg.pinv(R)
         
     result = r.T@Rinv@d
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def tcimf(HIM, d, no_d):
@@ -546,7 +546,7 @@ def tcimf(HIM, d, no_d):
     y = np.dot(np.dot(np.transpose(DU), Rinv), DU)
     y = np.linalg.inv(y)
     result = np.dot(np.dot(x, y), DUtw)  
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def cbd_img(HIM, d):
@@ -560,7 +560,7 @@ def cbd_img(HIM, d):
     d = np.reshape(d, [HIM.shape[2], 1])
     
     result = np.sum(abs(r-d))
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def cbd_point(p1, p2):
@@ -654,7 +654,7 @@ def amsd(HIM, d, no_d):
     c = a-b
     
     result = np.sum((rt@c)*rt, 1)/np.sum((rt@b)*rt, 1)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def amf(HIM, d, K = None, u = None):
@@ -680,8 +680,7 @@ def amf(HIM, d, K = None, u = None):
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in amf(), please check the input data')
     
     result = (dt@Kinv@r)/(dt@Kinv@d)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
-    
+    result = np.reshape(result, HIM.shape[:-1])    
     return result
 
 def ASW_CEM(HIM, d, Sprout_HIM, minwd, midwd, maxwd, wd_range, sprout_rate):

@@ -39,7 +39,7 @@ def R_rxd(HIM, R = None, axis = ''):
         result = result/n
     else:
         result = np.sum(((np.dot(rt, Rinv))*rt), 1)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def K_rxd(HIM, K = None, u = None, axis = ''):
@@ -73,7 +73,7 @@ def K_rxd(HIM, K = None, u = None, axis = ''):
         result = result/n
     else:
         result = np.sum((np.dot(rut, Kinv))*rut, 1)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def CR_rxd(HIM, R = None):
@@ -182,7 +182,7 @@ def utd(HIM, K = None, u = None):
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in utd(), please check the input data')
     
     result = (oneL-np.transpose(u))@Kinv@ru
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def rxd_utd(HIM, K = None, u = None):
@@ -205,7 +205,7 @@ def rxd_utd(HIM, K = None, u = None):
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in rxd_utd(), please check the input data')
 
     result = np.sum((np.transpose(r-1)@Kinv)*np.transpose(ru), 1)
-    result = result.reshape([HIM.shape[0], HIM.shape[1]])
+    result = np.reshape(result, HIM.shape[:-1])
     return result   
 
 def lptd(HIM, R = None):
@@ -226,7 +226,7 @@ def lptd(HIM, R = None):
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in lptd(), please check the input data')
     
     result = np.dot(np.dot(oneL, Rinv), r)
-    result = result.reshape(HIM.shape[0], HIM.shape[1])
+    result = np.reshape(result, HIM.shape[:-1])
     return result
 
 def sw_R_rxd(HIM, win):
