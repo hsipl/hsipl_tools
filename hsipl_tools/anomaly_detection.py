@@ -168,8 +168,10 @@ def RT_CR_rxd(HIM):
     
     for i in range(L, N):
         Rinv = cm.calc_Woodbury_R(r[:, i:i+1], R, i+1)
+            
+        rrt = r[:, i:i+1].T
+        result[i:i+1] = np.sum(((np.dot(rrt, Rinv))*rrt), 1)  
         R = np.linalg.inv(Rinv)
-        result[i:i+1] = R_rxd_use_r(r[:, i:i+1], R)
         
     result = np.reshape(result, HIM.shape[:-1])
     return result
