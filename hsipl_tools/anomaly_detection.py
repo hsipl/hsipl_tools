@@ -192,15 +192,11 @@ def RT_CK_rxd(HIM):
     result[:L] = K_rxd_use_r(r[:, :L], K, u)
     
     for i in range(L, N):
-        Kinv, ru = cm.calc_Woodbury_K_ru(r[:, i:i+1], K, u, i+1)
+        Kinv, u = cm.calc_Woodbury_K_u(r[:, i:i+1], K, u, i+1)
         
-        rut = np.transpose(ru)
-        try:
-            Kinv = np.linalg.inv(K)
-        except:
-            Kinv = np.linalg.pinv(K)
+        rut = np.transpose(r[:, i:i+1]-u)
         result[i:i+1] = np.sum((np.dot(rut, Kinv))*rut, 1)
-        K = np.linalg.inv(Kinv)
+        K = np.linalg.inv(Kinv)        
         
     result = np.reshape(result, HIM.shape[:-1])
     return result

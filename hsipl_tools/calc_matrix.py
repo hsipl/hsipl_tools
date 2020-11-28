@@ -94,7 +94,7 @@ def calc_Woodbury_R(r, last_R, n):
     new_Rinv = Ainv - (Ainv@u)@(vt@Ainv)/(1+vt@Ainv@u)
     return new_Rinv
     
-def calc_Woodbury_K_ru(r, last_K, last_u, n):
+def calc_Woodbury_K_u(r, last_K, last_u, n):
     '''
     Calculate the Covariance Matrix K and r-µ use Woodbury’s identity
     
@@ -103,9 +103,8 @@ def calc_Woodbury_K_ru(r, last_K, last_u, n):
     param last_u: last mean value µ, u(n-1), shape is [band num, 1]
     param n: n-th point (now), type is int
     '''
-    ru = r-(1-1/n)*last_u+(1/n)*r
     A = ((n-1)/n)*last_K
-    u = np.sqrt(n-1)/n*(last_u-r)-r
+    u = np.sqrt(n-1)/n*(last_u-r)
     vt = np.transpose(u)
     try:
         Ainv = np.linalg.inv(A)
@@ -114,5 +113,6 @@ def calc_Woodbury_K_ru(r, last_K, last_u, n):
         warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in calc_Woodbury_K_ru(), please check the input data')    
     
     new_Kinv = Ainv - (Ainv@u)@(vt@Ainv)/(1+vt@Ainv@u)
-    return new_Kinv, ru
+    µ = (1-1/n)*last_u+(1/n)*r
+    return new_Kinv, µ
     
