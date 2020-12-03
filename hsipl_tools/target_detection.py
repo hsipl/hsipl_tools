@@ -113,36 +113,85 @@ def hcem(HIM, d, max_it = 100, λ = 200, e = 1e-6):
     param λ: coefficients for constructing a new CEM detector, type is int
     param e: stop iterating until the error is less than e, type is int
     '''
-    imgH = HIM.shape[0]  #image height
-    imgW = HIM.shape[1]  #image width
-    N = imgH*imgW  #pixel number
-    D = HIM.shape[2]  #band number
-    Weight = np.ones([1, N])
-    y_old = np.ones([1, N])
-    
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])
+    D, N = r.shape  # bands, pixel number
+    hCEMMap_old = np.ones([1, N])
+    Weight = np.ones([1, N])
     
-    for T in range(max_it):
-        for pxlID in range(N):
-            r[:, pxlID] = r[:, pxlID]*Weight[:, pxlID]
-        R = r@r.T / N
+    for i in range(max_it):
+        r = r*Weight
+        R = 1/N*(r@r.T)
+        Rinv = np.linalg.inv(R + 0.0001*np.eye(D))
+        w = (Rinv@d) / (d.T@Rinv@d)
+        hCEMMap = w.T@r
         
-        w = np.linalg.inv(R + 0.0001*np.eye(D))@d / (d.T@np.linalg.inv(R + 0.0001*np.eye(D))@d)
-        
-        y = w.T@r
-        Weight = 1 - np.exp(-λ*y)
+        Weight = 1 - np.exp(-λ*hCEMMap)
         Weight[Weight < 0] = 0
         
-        res = np.linalg.norm(y_old)**2/N - np.linalg.norm(y)**2/N
-        print(f'iteration {T + 1}: ε = {res}')
-        y_old = y.copy()
-        
-        #stop criterion:
+        res = np.power(np.linalg.norm(hCEMMap_old), 2)/N - np.power(np.linalg.norm(hCEMMap), 2)/N
+        print(f'iteration {i+1}: ε = {res}')
+        hCEMMap_old = hCEMMap.copy()
         if np.abs(res) < e:
-             break;
-             
-        #display the detection results of each layer 
-        hCEMMap = np.reshape(y, [imgH, imgW])
+             break
+    hCEMMap = hCEMMap.reshape(HIM.shape[:-1])
+    return hCEMMap
+
+def wcem(HIM, d, Weight):
+    '''
+    Weight Constrained Energy Minimization
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param Weight: weights used for the first time
+    '''
+    rt = np.reshape(HIM, [-1, HIM.shape[2]])
+    r = np.transpose(rt)
+    d = np.reshape(d, [HIM.shape[2], 1])
+    N = r.shape[1]
+    R = 1/N*(Weight*r@r.T)
+    try:
+        Rinv = np.linalg.inv(R)
+    except:
+        Rinv = np.linalg.pinv(R)
+        
+    result = (rt@(Rinv@d)) / d.T@(Rinv@d)
+    result = np.reshape(result, HIM.shape[:-1])
+    return result
+
+def whcem(HIM, d, Weight, max_it = 100, λ = 200, e = 1e-6):
+    '''
+    Weight Hierarchical Constrained Energy Minimization
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param Weight: weights used for the first time
+    param max_it: maximum number of iterations, type is int
+    param λ: coefficients for constructing a new CEM detector, type is int
+    param e: stop iterating until the error is less than e, type is int
+    '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])
+    D, N = r.shape  # bands, pixel number  
+    hCEMMap_old = np.ones([1, N])
+    Weight = Weight.reshape(-1)
+    
+    for i in range(max_it):
+        r = r*Weight  # 第1次是用傳入的權重
+        R = 1/N*(r@r.T)
+        Rinv = np.linalg.inv(R + 0.0001*np.eye(D))
+        w = (Rinv@d) / (d.T@Rinv@d)
+        hCEMMap = w.T@r
+        
+        Weight = 1 - np.exp(-λ*hCEMMap)  # 第2次開始用hCEM算的權重
+        Weight[Weight < 0] = 0
+        
+        res = np.power(np.linalg.norm(hCEMMap_old), 2)/N - np.power(np.linalg.norm(hCEMMap), 2)/N
+        print(f'iteration {i+1}: ε = {res}')
+        hCEMMap_old = hCEMMap.copy()
+        if np.abs(res) < e:
+             break
+    hCEMMap = hCEMMap.reshape(HIM.shape[:-1])
     return hCEMMap
 
 def sam_img(HIM, d):

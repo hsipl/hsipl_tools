@@ -74,10 +74,11 @@ def ATGP(HIM, num_targets):
     temp = np.copy(Loc[:, 0])
     Loc[:, 0] = Loc[:, 1]
     Loc[:, 1] = temp
-    
+    # Loc 陣列index
     return Loc, Sig, xx
 
 def PPI(imagecub, skewer_no):
+    # skewer_no迭代次數，必須>500
     score = np.zeros([imagecub.shape[0] * imagecub.shape[1],1])
     
     skewer_sets = np.floor(skewer_no / 500.0) + 1
@@ -132,9 +133,13 @@ def PPI(imagecub, skewer_no):
     for q in range(index.shape[1]):
         index[0, q] = q
     
+    # xx 純度指數
+    # yy 每個純度指數對應的像素數量
+    # score 整張圖的純度指數分布
     return xx, yy, score, result
 
 def SGA(HIM, p):
+    # p 端元數量
     n=1;
     z=0;
 
