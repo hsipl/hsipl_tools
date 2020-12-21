@@ -161,7 +161,7 @@ def wcem(HIM, d, Weight):
 
 def whcem(HIM, d, Weight, max_it = 100, λ = 200, e = 1e-6):
     '''
-    Weight Hierarchical Constrained Energy Minimization
+    Weight Hierarchical Constrained Energy Minimization (自創)
     
     param HIM: hyperspectral imaging, type is 3d-array
     param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
@@ -172,14 +172,14 @@ def whcem(HIM, d, Weight, max_it = 100, λ = 200, e = 1e-6):
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])
-    D, N = r.shape  # bands, pixel number  
+    L, N = r.shape  # bands, pixel number  
     hCEMMap_old = np.ones([1, N])
     Weight = Weight.reshape(-1)
     
     for i in range(max_it):
         r = r*Weight  # 第1次是用傳入的權重
         R = 1/N*(r@r.T)
-        Rinv = np.linalg.inv(R + 0.0001*np.eye(D))
+        Rinv = np.linalg.inv(R + 0.0001*np.eye(L))
         w = (Rinv@d) / (d.T@Rinv@d)
         hCEMMap = w.T@r
         
@@ -191,6 +191,37 @@ def whcem(HIM, d, Weight, max_it = 100, λ = 200, e = 1e-6):
         hCEMMap_old = hCEMMap.copy()
         if np.abs(res) < e:
              break
+    hCEMMap = hCEMMap.reshape(HIM.shape[:-1])
+    return hCEMMap
+
+def pca_hcem(HIM, d, max_it = 100, λ = 200, e = 1e-6):
+    '''
+    Hierarchical Constrained Energy Minimization with Principal Component Analysis (自創)
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param max_it: maximum number of iterations, type is int
+    param λ: coefficients for constructing a new CEM detector, type is int
+    param e: stop iterating until the error is less than e, type is int
+    '''
+    from sklearn.decomposition import PCA
+    
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    d = np.reshape(d, [HIM.shape[2], 1])
+    L, N = r.shape  # bands, pixel number
+    Weight = np.ones([1, N])
+    
+    for i in range(max_it):
+        r = r*Weight
+        pca = PCA()
+        feature = pca.fit_transform(r.T)
+        enhance_data = r + feature.T
+        R = enhance_data@(enhance_data.T) / N
+        Rinv = np.linalg.inv(R + 0.0001*np.eye(L))
+        w = (Rinv@d) / (d.T@Rinv@d)
+        hCEMMap = w.T@r
+        Weight = 1 - np.exp(-λ*hCEMMap)  # 第2次開始用hCEM算的權重
+        Weight[Weight < 0] = 0
     hCEMMap = hCEMMap.reshape(HIM.shape[:-1])
     return hCEMMap
 
@@ -621,25 +652,40 @@ def cbd_point(p1, p2):
     '''
     result = np.sum(abs(p1-p2), 0)
     return result
+    
+def osp(HIM, d, no_d):
+    '''
+    Orthogonal Subspace Projection
+    
+    param HIM: hyperspectral imaging, type is 3d-array
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
+    '''
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
+    I = np.eye(HIM.shape[-2]) 
+    P = I - (no_d@np.linalg.inv( (no_d.T)@no_d ))@(no_d.T)
+    x = (d.T)@P@r
+    result = np.reshape(x, HIM.shape[:-1])
+    return result
         
 def LSOSP(HIM, d, no_d):
     '''
     Least Squares Orthogonal Subspace Projection
     
     param HIM: hyperspectral imaging, type is 3d-array
-    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
     param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
     '''
     x, y, z = HIM.shape
     
-    B = np.reshape(np.transpose(HIM), (z, x*y))
+    r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     I = np.eye(z)
     
-    P = I - np.dot(np.dot(no_d, (np.linalg.inv(np.dot(np.transpose(no_d), no_d)))), np.transpose(no_d))
+    P = I - (no_d@np.linalg.inv( (no_d.T)@no_d ))@(no_d.T)
     
-    lsosp = (np.dot(d.transpose(), P)) / (np.dot(np.dot(d.transpose(), P), d))
+    lsosp = (np.dot(np.transpose(d), P)) / (np.dot(np.dot(np.transpose(d), P), d))
     
-    dr = np.dot(lsosp, B)
+    dr = lsosp@r
     
     result = np.transpose(np.reshape(dr, [y, x]))
     
@@ -650,8 +696,8 @@ def KLSOSP(HIM, d, no_d, sig):
     Kernel-based Least Squares Orthogonal Subspace Projection
     
     param HIM: hyperspectral imaging, type is 3d-array
-    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, point num], for example: [224, 1]
-    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1]
+    param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+    param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
     param sig: int, you can try 1, 10, 100, the results may all be different.
     
     KLSOSP是屬於kernael型的OSP 採用的kernael是RBF
