@@ -74,31 +74,3 @@ class model:
             plt.imshow(img_result)
         
         return img_result
-    
-    def graythresh_n(self, image, n):
-        '''
-        do thresholding n times
-        
-        param image: image, type is 2d-array.
-        param n: do thresholding n times.
-        '''
-        from skimage.filters import threshold_otsu
-        
-        image = image.reshape((image.shape[0] * image.shape[1], 1))
-        for i in range(n-1):
-            thresh = threshold_otsu(image)
-            bimage = image.copy()
-    		
-            bimage[bimage < thresh] = 0
-            bimage[bimage >= thresh] = 1
-            
-            bimage = bimage.reshape((bimage.shape[0] * bimage.shape[1], 1))
-    
-            zero_index = np.argwhere(bimage == 0)
-            zero_index = list(zero_index[:, 0])
-            
-            image = np.delete(image, zero_index, 0)
-        
-        threshold = threshold_otsu(image)
-            
-        return threshold

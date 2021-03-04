@@ -700,7 +700,7 @@ def KLSOSP(HIM, d, no_d, sig):
     param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
     param sig: int, you can try 1, 10, 100, the results may all be different.
     
-    KLSOSP是屬於kernael型的OSP 採用的kernael是RBF
+    KLSOSP是屬於kernel型的OSP 採用的kernel是RBF
     '''
     x, y, z = HIM.shape
     
@@ -781,6 +781,18 @@ def amf(HIM, d, K = None, u = None):
 def ASW_CEM(HIM, d, Sprout_HIM, minwd, midwd, maxwd, wd_range, sprout_rate):
     '''
     Adaptive Sliding Window based Constrained Energy Minimization
+    
+    param HIM: 高光譜影像3D
+    param d: 感興趣目標點2D
+    param Sprout_HIM: 新生葉芽比例圖 (groundtruth)
+    param minwd: 最小視窗
+    param midwd: 中間視窗
+    param maxwd: 最大視窗
+    param wd_range: 視窗增大或縮小的幅度
+    param sprout_rate: 新生葉芽比例
+    
+    example:
+    >> result = ASW_CEM(HIM, d, groundtruth, 11, 75, 151, 1, 0.001)
     '''
     x, y, z = HIM.shape
     

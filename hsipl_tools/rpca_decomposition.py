@@ -7,7 +7,16 @@ Created on Fri Sep 11 14:32:48 2020
 
 '''
 RPCA分解法
-本python檔為Wen Long學長提供
+程式是Wen Long學長寫的，註解是Yuchi寫的ㄏ
+
+param data: 高光譜影像2D
+
+return L, S: 都是2D的，要畫圖要自己轉回3D
+
+example:
+    >> x, y, z = HIM.shape
+    >> r = np.reshape(HIM, [-1, z])
+    >> L, S = hsipl_tools.rpca_decomposition.GA(r)
 '''
 
 import numpy as np
