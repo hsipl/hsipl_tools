@@ -5,7 +5,7 @@ long_description = f.read()
 
 setuptools.setup(
     name="hsipl_tools",
-    version="0.0.5",
+    version="0.0.6",
     description="Tools for Hyperspectral Signal and Image Processing Laboratory of YunTech, Taiwan",
     license="MIT",
     long_description=long_description,
