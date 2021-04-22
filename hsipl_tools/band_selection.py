@@ -8,6 +8,7 @@ import numpy as np
 from scipy.stats import entropy
 import time
 import pandas as pd
+import warnings
 
 def CEM_BCC(imagecube, num):
     xx,yy,band_num=imagecube.shape
@@ -15,7 +16,11 @@ def CEM_BCC(imagecube, num):
     test_image = np.mat(np.array(test_image))
     R = test_image*test_image.T/(xx*yy*1.0)
     
-    tt = np.mat(R) ** -1
+    try:
+        tt = np.linalg.inv(np.mat(R))
+    except:
+        tt = np.linalg.pinv(np.mat(R))
+        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in CEM_BCC(), please check the input data')
     
     score=np.zeros(( band_num,band_num))
     for i in range(0,band_num):
@@ -53,7 +58,11 @@ def CEM_BCM(imagecube, num):
     test_image = imagecube.reshape((xx*yy, band_num))
     test_image = np.mat(np.array(test_image))
     R = test_image*test_image.T/(xx*yy*1.0)
-    tt = np.mat(R) ** -1
+    try:
+        tt = np.linalg.inv(np.mat(R))
+    except:
+        tt = np.linalg.pinv(np.mat(R))
+        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in CEM_BCM(), please check the input data')
     score=np.zeros((band_num,1))
     for i in range(0,band_num):
         endmember_matrix = test_image[:, i]
@@ -74,7 +83,7 @@ def CEM_BCM(imagecube, num):
     
     return band_select
 
-def CEM_BDM(self, imagecube, num):
+def CEM_BDM(imagecube, num):
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num))
     test_image = np.mat(np.array(test_image))
@@ -85,7 +94,10 @@ def CEM_BDM(self, imagecube, num):
         endmember_matrix = test_image[:, i]
         R_new = R - endmember_matrix * endmember_matrix.T
         R_new = R_new/(band_num -1)
-        tt = np.mat(R_new) ** -1
+        try:
+            tt = np.linalg.inv(np.mat(R_new))
+        except:
+            tt = np.linalg.pinv(np.mat(R_new))
         W = tt* endmember_matrix * ((endmember_matrix.T * tt * endmember_matrix)**-1)
         score[i] = W.T * R * W
     weight = np.abs(score)
