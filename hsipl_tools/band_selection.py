@@ -12,7 +12,7 @@ import warnings
 
 def CEM_BCC(imagecube, num):
     xx,yy,band_num=imagecube.shape
-    test_image = imagecube.reshape((xx, yy, band_num))
+    test_image = imagecube.reshape((xx*yy, band_num))
     test_image = np.mat(np.array(test_image))
     R = test_image*test_image.T/(xx*yy*1.0)
     
