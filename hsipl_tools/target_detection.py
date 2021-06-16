@@ -172,19 +172,19 @@ def whcem(HIM, d, Weight, max_it = 100, λ = 200, e = 1e-6):
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
     d = np.reshape(d, [HIM.shape[2], 1])
-    L, N = r.shape  # bands, pixel number  
+    L, N = r.shape  # bands, pixel number
     hCEMMap_old = np.ones([1, N])
-    Weight = Weight.reshape(-1)
+    weight = np.ones([1, N])
     
     for i in range(max_it):
-        r = r*Weight  # 第1次是用傳入的權重
-        R = 1/N*(r@r.T)
-        Rinv = np.linalg.inv(R + 0.0001*np.eye(L))
+        r = r*weight
+        R = 1/N*(Weight*r@r.T)
+        Rinv = np.linalg.inv(R)
         w = (Rinv@d) / (d.T@Rinv@d)
         hCEMMap = w.T@r
         
-        Weight = 1 - np.exp(-λ*hCEMMap)  # 第2次開始用hCEM算的權重
-        Weight[Weight < 0] = 0
+        weight = 1 - np.exp(-λ*hCEMMap)
+        weight[weight < 0] = 0
         
         res = np.power(np.linalg.norm(hCEMMap_old), 2)/N - np.power(np.linalg.norm(hCEMMap), 2)/N
         print(f'iteration {i+1}: ε = {res}')
