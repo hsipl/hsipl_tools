@@ -662,7 +662,7 @@ def osp(HIM, d, no_d):
     param no_d: undesired target, type is 2d-array, size is [band num, point num], for example: [224, 1], [224, 3]
     '''
     r = np.transpose(np.reshape(HIM, [-1, HIM.shape[2]]))
-    I = np.eye(HIM.shape[-2]) 
+    I = np.eye(HIM.shape[2]) 
     P = I - (no_d@np.linalg.inv( (no_d.T)@no_d ))@(no_d.T)
     x = (d.T)@P@r
     result = np.reshape(x, HIM.shape[:-1])
