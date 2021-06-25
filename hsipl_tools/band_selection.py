@@ -11,6 +11,10 @@ import pandas as pd
 import warnings
 
 def CEM_BCC(imagecube, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    num:       要的波段數量，int
+    '''
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num))
     test_image = np.mat(np.array(test_image))
@@ -54,6 +58,10 @@ def CEM_BCC(imagecube, num):
     return band_select
 
 def CEM_BCM(imagecube, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    num:       要的波段數量，int
+    '''
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num))
     test_image = np.mat(np.array(test_image))
@@ -84,6 +92,10 @@ def CEM_BCM(imagecube, num):
     return band_select
 
 def CEM_BDM(imagecube, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    num:       要的波段數量，int
+    '''
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num))
     test_image = np.mat(np.array(test_image))
@@ -116,6 +128,10 @@ def CEM_BDM(imagecube, num):
     return band_select
 
 def BS_STD(imagecube, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    num:       要的波段數量，int
+    '''
     hyperspectral = imagecube.reshape((imagecube.shape[0]*imagecube.shape[1],imagecube.shape[2] ))
     hyperspectral_std=np.zeros((2,imagecube.shape[2]))
     hyperspectral_std[0,:] =range(0,imagecube.shape[2])
@@ -137,6 +153,10 @@ def BS_STD(imagecube, num):
     return newcube,band_select        
 
 def BS_Corrcoef(imagecube, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    num:       要的波段數量，int
+    '''
     hyperspectral = imagecube.reshape((imagecube.shape[0]*imagecube.shape[1],imagecube.shape[2] ))
     scores = np.zeros((imagecube.shape[2],imagecube.shape[2]))
     for i in range(imagecube.shape[2]):
@@ -157,6 +177,10 @@ def BS_Corrcoef(imagecube, num):
     return band_select  
         
 def BS_Entropy(imagecube, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    num:       要的波段數量，int
+    '''
     hyperspectral = imagecube.reshape((imagecube.shape[0]*imagecube.shape[1],imagecube.shape[2] ))
     hyperspectral_entropy = np.zeros((2,imagecube.shape[2]))
     hyperspectral_entropy[0,:]=range(imagecube.shape[2])
@@ -174,6 +198,11 @@ def BS_Entropy(imagecube, num):
     return band_select
 
 def BS_minV_BP(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     X = []
     for i in range(d.shape[1]):
@@ -190,9 +219,14 @@ def BS_minV_BP(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def BS_maxV_BP(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     X = []
     for i in range(d.shape[1]):
@@ -209,9 +243,14 @@ def BS_maxV_BP(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def BS_SF_CTBS(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     X = []
     for i in range(d.shape[1]):
@@ -228,9 +267,14 @@ def BS_SF_CTBS(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def BS_SB_CTBS(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     X = []
     for i in range(d.shape[1]):
@@ -247,9 +291,14 @@ def BS_SB_CTBS(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def SF_CTBS(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     
     xx,yy,band_num=imagecube.shape
@@ -291,9 +340,14 @@ def SF_CTBS(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def SB_CTBS(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     
     xx,yy,band_num=imagecube.shape
@@ -329,9 +383,14 @@ def SB_CTBS(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def minV_BP(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     
     xx,yy,band_num=imagecube.shape
@@ -358,9 +417,14 @@ def minV_BP(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def maxV_BP(imagecube, d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     
     xx,yy,band_num=imagecube.shape
@@ -388,9 +452,13 @@ def maxV_BP(imagecube, d, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def uniform_BS(band_num, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    num:       要的波段數量，int
+    '''
     start = time.clock()
     
     score = np.random.uniform(0, 1, [band_num, 1])
@@ -407,9 +475,15 @@ def uniform_BS(band_num, num):
     end = time.clock()
     runtime = end - start
     
-    return band_select, runtime
+    return band_select
 
 def FminV_BP(imagecube, d, no_d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    no_d:      不感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
@@ -434,6 +508,12 @@ def FminV_BP(imagecube, d, no_d, num):
     return band_select
 
 def BmaxV_BP(imagecube, d, no_d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    no_d:      不感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
@@ -458,6 +538,12 @@ def BmaxV_BP(imagecube, d, no_d, num):
     return band_select
 
 def SF_TCIMBS(imagecube, d, no_d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    no_d:      不感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
@@ -503,6 +589,12 @@ def SF_TCIMBS(imagecube, d, no_d, num):
     return band_select
 
 def SB_TCIMBS(imagecube, d, no_d, num):
+    '''
+    imagecube: 高光譜影像，3D-array
+    d:         感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    no_d:      不感興趣目標，shape會長得像這樣 [波段數, 訊號數]
+    num:       要的波段數量，int
+    '''
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
