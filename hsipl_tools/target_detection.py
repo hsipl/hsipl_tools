@@ -45,8 +45,8 @@ def subset_cem(HIM, d, win_height = None, win_width = None):
     if win_width is None:
         win_width = np.ceil(HIM.shape[1] / 3)
     
-    if win_height > HIM.shape[0] or win_width > HIM.shape[1] or win_height < 2 or win_width < 2:
-        raise ValueError('Wrong window size for subset_cem()')
+    # if win_height > HIM.shape[0] or win_width > HIM.shape[1] or win_height < 2 or win_width < 2:
+    #     raise ValueError('Wrong window size for subset_cem()')
     
     d = np.reshape(d, [HIM.shape[2], 1])
     result = np.zeros([HIM.shape[0], HIM.shape[1]])
@@ -65,8 +65,8 @@ def sw_cem(HIM, d, win):
     param d: desired target d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
     param win: window size used for sliding
     '''
-    if win*2 > HIM.shape[0] or win*2 > HIM.shape[1]:
-        raise ValueError('Wrong window size for sw_cem()')
+    # if win*2 > HIM.shape[0] or win*2 > HIM.shape[1]:
+    #     raise ValueError('Wrong window size for sw_cem()')
     half = np.fix(win/2);
     result = np.zeros([HIM.shape[0], HIM.shape[1]])
 
@@ -96,11 +96,11 @@ def sw_cem(HIM, d, win):
             X = np.reshape(np.transpose(Local_HIM), (Local_HIM.shape[2], Local_HIM.shape[0]*Local_HIM.shape[1]))
             S = np.dot(X,np.transpose(X))
             r = np.reshape(HIM[i,j,:], [HIM.shape[2], 1])
-        
-            S = np.linalg.inv(S)
-     
+       	    try:
+            	S = np.linalg.inv(S)
+	    except:
+     		S = np.linalg.pinv(S)
             result[i,j] = np.dot(np.dot(np.transpose(r), S), d) / np.dot(np.dot(np.transpose(d), S), d)
-
     return result
 
 def hcem(HIM, d, max_it = 100, λ = 200, e = 1e-6):
@@ -498,24 +498,24 @@ def kmd_img(HIM, d, K = None, u = None):
     result = np.reshape(result, HIM.shape[:-1])
     return result
 
-def kmd_point(p1, p2, K = None):
-    '''
-    Covariance Mahalanobis Distance for point to point
-    
-    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
-    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
-    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
-    '''
-    if K is None:
-        K, _ = cm.calc_K_u(np.expand_dims(p1, 0))
-    try:
-        Kinv = np.linalg.inv(K)
-    except:
-        Kinv = np.linalg.pinv(K)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in kmd_point(), please check the input data')
-    x = p1-p2
-    result = np.dot(np.dot(np.transpose(x), Kinv), x)
-    return result
+#def kmd_point(p1, p2, K = None):
+#    '''
+#    Covariance Mahalanobis Distance for point to point
+#    
+#    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
+#    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+#    param K: Covariance Matrix, type is 2d-array, if K is None, it will be calculated in the function
+#    '''
+#    if K is None:
+#        K, _ = cm.calc_K_u(np.expand_dims(p1, 0))
+#    try:
+#        Kinv = np.linalg.inv(K)
+#    except:
+#        Kinv = np.linalg.pinv(K)
+#        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in kmd_point(), please check the input data')
+#    x = p1-p2
+#    result = np.dot(np.dot(np.transpose(x), Kinv), x)
+#    return result
 
 def rmd_img(HIM, d, R = None):
     '''
@@ -540,24 +540,24 @@ def rmd_img(HIM, d, R = None):
     result = np.reshape(result, HIM.shape[:-1])
     return result
 
-def rmd_point(p1, p2, R = None):
-    '''
-    Correlation Mahalanobis Distance for point to point
-    
-    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
-    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
-    param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
-    '''
-    if R is None:
-        R = cm.calc_R(np.expand_dims(p1, 0))
-    try:
-        Rinv = np.linalg.inv(R)
-    except:
-        Rinv = np.linalg.pinv(R)
-        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in rmd_point(), please check the input data')
-    x = p1-p2
-    result = np.dot(np.dot(np.transpose(x), Rinv), x)
-    return result
+#def rmd_point(p1, p2, R = None):
+#    '''
+#    Correlation Mahalanobis Distance for point to point
+#    
+#    param p1: a point, type is 2d-array, size is [band num, 1], for example: [224, 1]
+#    param p2: a point same as d (Desired Signature), type is 2d-array, size is [band num, 1], for example: [224, 1]
+#    param R: Correlation Matrix, type is 2d-array, if R is None, it will be calculated in the function
+#    '''
+#    if R is None:
+#        R = cm.calc_R(np.expand_dims(p1, 0))
+#    try:
+#        Rinv = np.linalg.inv(R)
+#    except:
+#        Rinv = np.linalg.pinv(R)
+#        warnings.warn('The pseudo-inverse matrix is used instead of the inverse matrix in rmd_point(), please check the input data')
+#    x = p1-p2
+#    result = np.dot(np.dot(np.transpose(x), Rinv), x)
+#    return result
 
 def kmfd(HIM, d, K = None, u = None):
     '''
