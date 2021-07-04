@@ -203,21 +203,16 @@ def BS_minV_BP(imagecube, d, num):
     d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
     num:       要的波段數量，int
     '''
-    start = time.clock()
     X = []
     for i in range(d.shape[1]):
         dd = d[:, i].reshape((d.shape[0], 1), order='F')
-        minV_BP_band_select, minV_BP_runtime = minV_BP(imagecube, dd, num)
-        minV_BP_band_select = minV_BP_band_select.reshape((minV_BP_band_select.shape[0]), order='F')
+        minV_BP_band_select = minV_BP(imagecube, dd, num).reshape((minV_BP_band_select.shape[0]), order='F')
         X.append(minV_BP_band_select)
       
     X = np.array(X)
     a = pd.Series(X.reshape((X.shape[0]*X.shape[1]), order='F'))
     b = a.value_counts()
     band_select = np.array(b[:num].index)
-    
-    end = time.clock()
-    runtime = end - start
     
     return band_select
 
@@ -227,21 +222,16 @@ def BS_maxV_BP(imagecube, d, num):
     d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
     num:       要的波段數量，int
     '''
-    start = time.clock()
     X = []
     for i in range(d.shape[1]):
         dd = d[:, i].reshape((d.shape[0], 1), order='F')
-        maxV_BP_band_select, maxV_BP_runtime = maxV_BP(imagecube, dd, num)
-        maxV_BP_band_select = maxV_BP_band_select.reshape((maxV_BP_band_select.shape[0]), order='F')
+        maxV_BP_band_select = maxV_BP(imagecube, dd, num).reshape((maxV_BP_band_select.shape[0]), order='F')
         X.append(maxV_BP_band_select)
       
     X = np.array(X)
     a = pd.Series(X.reshape((X.shape[0]*X.shape[1]), order='F'))
     b = a.value_counts()
     band_select = np.array(b[:num].index)
-    
-    end = time.clock()
-    runtime = end - start
     
     return band_select
 
@@ -251,21 +241,16 @@ def BS_SF_CTBS(imagecube, d, num):
     d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
     num:       要的波段數量，int
     '''
-    start = time.clock()
     X = []
     for i in range(d.shape[1]):
         dd = d[:, i].reshape((d.shape[0], 1), order='F')
-        SF_CTBS_band_select, SF_CTBS_runtime = SF_CTBS(imagecube, dd, num)
-        SF_CTBS_band_select = SF_CTBS_band_select.reshape((SF_CTBS_band_select.shape[0]), order='F')
+        SF_CTBS_band_select = SF_CTBS(imagecube, dd, num).reshape((SF_CTBS_band_select.shape[0]), order='F')
         X.append(SF_CTBS_band_select)
       
     X = np.array(X)
     a = pd.Series(X.reshape((X.shape[0]*X.shape[1]), order='F'))
     b = a.value_counts()
     band_select = np.array(b[:num].index)
-    
-    end = time.clock()
-    runtime = end - start
     
     return band_select
 
@@ -275,21 +260,16 @@ def BS_SB_CTBS(imagecube, d, num):
     d:         感興趣目標，前面有加BS的可以給很多個d，shape會長得像這樣 [波段數, 訊號數]
     num:       要的波段數量，int
     '''
-    start = time.clock()
     X = []
     for i in range(d.shape[1]):
         dd = d[:, i].reshape((d.shape[0], 1), order='F')
-        SB_CTBS_band_select, SB_CTBS_runtime = SB_CTBS(imagecube, dd, num)
-        SB_CTBS_band_select = SB_CTBS_band_select.reshape((SB_CTBS_band_select.shape[0]), order='F')
+        SB_CTBS_band_select = SB_CTBS(imagecube, dd, num).reshape((SB_CTBS_band_select.shape[0]), order='F')
         X.append(SB_CTBS_band_select)
       
     X = np.array(X)
     a = pd.Series(X.reshape((X.shape[0]*X.shape[1]), order='F'))
     b = a.value_counts()
     band_select = np.array(b[:num].index)
-    
-    end = time.clock()
-    runtime = end - start
     
     return band_select
 
@@ -299,8 +279,6 @@ def SF_CTBS(imagecube, d, num):
     d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
     num:       要的波段數量，int
     '''
-    start = time.clock()
-    
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
@@ -337,9 +315,6 @@ def SF_CTBS(imagecube, d, num):
         
     band_select = np.array(omega)
     
-    end = time.clock()
-    runtime = end - start
-    
     return band_select
 
 def SB_CTBS(imagecube, d, num):
@@ -348,8 +323,6 @@ def SB_CTBS(imagecube, d, num):
     d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
     num:       要的波段數量，int
     '''
-    start = time.clock()
-    
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
@@ -380,9 +353,6 @@ def SB_CTBS(imagecube, d, num):
         
     band_select = np.array(omega)
     
-    end = time.clock()
-    runtime = end - start
-    
     return band_select
 
 def minV_BP(imagecube, d, num):
@@ -391,8 +361,6 @@ def minV_BP(imagecube, d, num):
     d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
     num:       要的波段數量，int
     '''
-    start = time.clock()
-    
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
@@ -414,9 +382,6 @@ def minV_BP(imagecube, d, num):
     sorted_y2 = original[sorted_indices]
     band_select = sorted_y2[:num]
     
-    end = time.clock()
-    runtime = end - start
-    
     return band_select
 
 def maxV_BP(imagecube, d, num):
@@ -425,8 +390,6 @@ def maxV_BP(imagecube, d, num):
     d:         感興趣目標，這個前面沒加BS的只能給一個d，shape會長得像這樣 [波段數, 1]
     num:       要的波段數量，int
     '''
-    start = time.clock()
-    
     xx,yy,band_num=imagecube.shape
     test_image = imagecube.reshape((xx*yy, band_num), order='F')
     
@@ -449,16 +412,9 @@ def maxV_BP(imagecube, d, num):
     sorted_y2 = original[sorted_indices]
     band_select = sorted_y2[:num]
     
-    end = time.clock()
-    runtime = end - start
-    
     return band_select
 
 def uniform_BS(band_num, num):
-    '''
-    imagecube: 高光譜影像，3D-array
-    num:       要的波段數量，int
-    '''
     start = time.clock()
     
     score = np.random.uniform(0, 1, [band_num, 1])
