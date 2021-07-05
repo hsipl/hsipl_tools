@@ -32,3 +32,4 @@ img = sio.loadmat('panelHIM.mat')['HIM']  #讀圖檔
 
 from hsipl_tools import anomaly_detection as ad   
 rxd_res = ad.R_rxd(img)  
+ 
