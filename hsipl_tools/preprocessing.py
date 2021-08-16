@@ -6,7 +6,7 @@ Created on Wed Sep 16 18:55:27 2020
 """
 
 import numpy as np
-   
+from skimage import segmentation, measure, filters
 def data_normalize(input_data):
     input_data = np.array(input_data)*1.0
     maximum = np.max(np.max(input_data))
@@ -56,3 +56,24 @@ def awgn(x, snr):
     npower = xpower / snr
     noise = np.random.randn(len(x)) * np.sqrt(npower)
     return x + noise
+def dust_roi(img, mask,ignoreArea=10):
+    try:
+        label_roi = []
+        cleared = mask.copy()
+        segmentation.clear_border(cleared)
+        label_image = measure.label(cleared)
+        borders = np.logical_xor(mask, cleared)
+        label_image[borders] = -1
+        x = 5
+        for region in measure.regionprops(label_image):
+            # 忽略小區域
+            if region.area < ignoreArea:
+                continue
+            # ROI
+            minr, minc, maxr, maxc = region.bbox
+            label_roi.append(img[minr-x:maxr+x, minc-x:maxc+x, :])
+    except Exception as e:
+        print(e)
+    else:
+        return label_roi
+
