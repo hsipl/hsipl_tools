@@ -36,15 +36,15 @@ def msc(input_data, reference = None):
    
 def snv(input_data):
     '''
-    Standard Normal Variate
-    
-    param input_data: signal, type is 2d-array, size is [signal num, band num]
+    input_data : hyperspectral data can be
+                3d [width , height , bands] 
+                2d [average spectral samples, bands]
     '''
-    data_snv = np.zeros_like(input_data)
-    for i in range(input_data.shape[0]):
-        data_snv[i,:] = (input_data[i,:] - np.mean(input_data[i,:])) / np.std(input_data[i,:])
-    return data_snv
-
+    d = len(input_data.shape)-1
+    mean = input_data.mean(d)
+    std = input_data.std(d)
+    res = (input_data - mean[...,None] ) / std[...,None]
+    return res
 def awgn(x, snr):
     '''
     Additive white Gaussian noise 高斯白雜訊
